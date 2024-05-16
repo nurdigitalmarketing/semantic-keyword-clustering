@@ -25,6 +25,10 @@ def cluster_keywords(data, lang, num_clusters):
     sentences = [row.split() for row in data['processed_keywords']]
     w2v_model = Word2Vec(sentences, vector_size=100, window=5, min_count=1, workers=4)
     word_vectors = [sum([w2v_model.wv[word] for word in sentence]) / len(sentence) for sentence in sentences]
+    
+    if len(word_vectors) < num_clusters:
+        raise ValueError(f"Number of samples ({len(word_vectors)}) must be >= number of clusters ({num_clusters}).")
+    
     kmeans = KMeans(n_clusters=num_clusters, random_state=0).fit(word_vectors)
     data['cluster'] = kmeans.labels_
     return data
@@ -56,31 +60,33 @@ if 'data' in locals() and data is not None:
 
     # Esegui il clustering
     if st.button('Cluster Keywords'):
-        clustered_data = cluster_keywords(data, lang, num_clusters)
+        try:
+            clustered_data = cluster_keywords(data, lang, num_clusters)
+            # Mostra i risultati
+            st.write(clustered_data)
 
-        # Mostra i risultati
-        st.write(clustered_data)
+            # Esportazione dei risultati
+            output_format = st.selectbox('Select export format', ['CSV', 'Excel'])
 
-        # Esportazione dei risultati
-        output_format = st.selectbox('Select export format', ['CSV', 'Excel'])
-
-        if output_format == 'CSV':
-            csv = clustered_data.to_csv(index=False).encode('utf-8')
-            st.download_button(
-                label="Download clustered keywords as CSV",
-                data=csv,
-                file_name='clustered_keywords.csv',
-                mime='text/csv',
-            )
-        elif output_format == 'Excel':
-            output = BytesIO()
-            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                clustered_data.to_excel(writer, index=False, sheet_name='Sheet1')
-            st.download_button(
-                label="Download clustered keywords as Excel",
-                data=output.getvalue(),
-                file_name='clustered_keywords.xlsx',
-                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            )
+            if output_format == 'CSV':
+                csv = clustered_data.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                    label="Download clustered keywords as CSV",
+                    data=csv,
+                    file_name='clustered_keywords.csv',
+                    mime='text/csv',
+                )
+            elif output_format == 'Excel':
+                output = BytesIO()
+                with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                    clustered_data.to_excel(writer, index=False, sheet_name='Sheet1')
+                st.download_button(
+                    label="Download clustered keywords as Excel",
+                    data=output.getvalue(),
+                    file_name='clustered_keywords.xlsx',
+                    mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                )
+        except ValueError as e:
+            st.error(e)
 
 # Avvia l'app con: streamlit run app.py
