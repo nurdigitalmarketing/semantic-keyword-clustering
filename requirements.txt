@@ -1,7 +1,4 @@
 streamlit
 pandas
 scikit-learn
-nltk
-gensim
-xlsxwriter
-scipy==1.10.1
+matplotlib
