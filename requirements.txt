@@ -4,4 +4,4 @@ scikit-learn
 nltk
 gensim
 xlsxwriter
-scipy==1.7.1
+scipy
