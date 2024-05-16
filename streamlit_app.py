@@ -42,6 +42,7 @@ lang = st.selectbox('Select language for stopwords', ['english', 'spanish', 'fre
 # Input delle parole chiave o caricamento del file CSV
 input_option = st.radio("Choose input method", ('Manual Input', 'Upload CSV'))
 
+data = None
 if input_option == 'Manual Input':
     keywords = st.text_area("Enter keywords separated by commas")
     if keywords:
@@ -55,11 +56,13 @@ elif input_option == 'Upload CSV':
             data = None
 
 # Selezione del numero di cluster
-if 'data' in locals() and data is not None:
-    num_clusters = st.slider('Select number of clusters', 1, 20, 5)
+if data is not None:
+    num_samples = len(data)
+    st.write(f"Number of samples: {num_samples}")
+    num_clusters = st.slider('Select number of clusters', 1, min(20, num_samples), 5)
 
     # Esegui il clustering
-    if st.button('Cluster Keywords'):
+    if st.button('Cluster Keywords') and num_samples >= num_clusters:
         try:
             clustered_data = cluster_keywords(data, lang, num_clusters)
             # Mostra i risultati
@@ -88,5 +91,7 @@ if 'data' in locals() and data is not None:
                 )
         except ValueError as e:
             st.error(e)
+    elif num_samples < num_clusters:
+        st.error(f"Number of samples ({num_samples}) must be >= number of clusters ({num_clusters}).")
 
 # Avvia l'app con: streamlit run app.py
